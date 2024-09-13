@@ -1,9 +1,9 @@
-name: Build, Push Docker Image, SonarQube Scan, and Deploy
+name: Docker swarm
 
 on:
   push:
     branches:
-      - main  # Trigger workflow on push to the 'master' branch
+      - main  # Trigger workflow on push to the 'main' branch
   workflow_dispatch:  # Allows manual triggering
 
 jobs:
@@ -30,8 +30,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-        with:
-          driver: docker-container  # Ensures Buildx uses the container driver
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
@@ -47,18 +45,6 @@ jobs:
           push: true
           tags: kishore1092001/simple-app:latest
 
-      # - name: SonarQube Scan
-      #   run: |
-      #     docker run --rm \
-      #       -e SONAR_HOST_URL=${{ secrets.SONARQUBE_URL }} \
-      #       -e SONAR_TOKEN=${{ secrets.SONARQUBE_TOKEN }} \
-      #       -v $(pwd):/usr/src \
-      #       sonarsource/sonar-scanner-cli \
-      #       -Dsonar.projectKey=action \
-      #       -Dsonar.sources=. \
-      #       -Dsonar.host.url=${{ secrets.SONARQUBE_URL }} \
-      #       -Dsonar.login=${{ secrets.SONARQUBE_TOKEN }}
-
   deploy:
     runs-on: self-hosted
     needs: build
@@ -70,13 +56,11 @@ jobs:
       - name: Pull the latest Docker image
         run: docker pull kishore1092001/simple-app:latest
 
-      - name: Stop and remove existing container
+      - name: Deploy Docker stack to Swarm
         run: |
-          if [ "$(docker ps -q -f name=simple-app)" ]; then
-            docker stop simple-app
-            docker rm simple-app
-          fi
-
-      - name: Run new Docker container
-        run: |
-          docker run -d --name simple-app -p 80:80 kishore1092001/simple-app:latest
+          # Deploy to the master node
+          ssh ubuntu@44.203.250.222 'docker stack deploy --compose-file /path/to/docker-compose.yml app'
+          
+          # Optionally, you can add commands to pull the latest image explicitly on the worker node
+          # and update the stack if needed
+          ssh ubuntu@3.86.206.29 'docker stack deploy --compose-file /path/to/docker-compose.yml app'
