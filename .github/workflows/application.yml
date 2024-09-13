@@ -22,7 +22,6 @@ jobs:
             sudo usermod -aG docker $USER
             newgrp docker
           fi
-          # Ensure the Docker socket has correct permissions
           sudo chmod 666 /var/run/docker.sock
 
       - name: Docker Info
@@ -45,7 +44,6 @@ jobs:
           push: true
           tags: kishore1092001/simple-app:latest
 
-      # Optional: SonarQube Scan
       # - name: SonarQube Scan
       #   run: |
       #     docker run --rm \
@@ -63,13 +61,10 @@ jobs:
     needs: build
 
     steps:
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
       - name: Deploy to Docker Swarm
         run: |
-          # Deploy stack to master node
-          ssh ubuntu@44.203.250.222 'docker stack deploy --compose-file /home/ubuntu/actions-runner/_work/Using-docker-swarm-cicd-pipeline/Using-docker-swarm-cicd-pipeline/docker-compose.yaml app'
+          # Deploy stack to the master node
+          docker stack deploy --compose-file /home/ubuntu/actions-runner/_work/Using-docker-swarm-cicd-pipeline/Using-docker-swarm-cicd-pipeline/docker-compose.yaml app
           
-          # Ensure images are pulled on worker nodes
-          ssh ubuntu@44.203.250.222 'docker service update --image kishore1092001/simple-app:latest app_web'
+          # Optionally, ensure images are pulled and services updated on the worker nodes
+          docker service update --image kishore1092001/simple-app:latest app_web
