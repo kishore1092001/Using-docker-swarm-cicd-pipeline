@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  web:
+    image: kishore1092001/simple-app:latest
+    ports:
+      - "80:80"
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
